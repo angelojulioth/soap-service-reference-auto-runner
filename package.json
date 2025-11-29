@@ -24,6 +24,7 @@
   "categories": [
     "Other"
   ],
+  "icon": "icon.png",
   "extensionKind": [
     "workspace"
   ],
