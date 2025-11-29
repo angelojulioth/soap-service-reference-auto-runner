@@ -24,11 +24,18 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onStartupFinished"
+  "extensionKind": [
+    "workspace"
   ],
+  "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "codeLensProviders": [
+      {
+        "language": "json",
+        "scheme": "file"
+      }
+    ],
     "commands": [
       {
         "command": "soap-service-reference-auto-runner.runSvcUtil",
