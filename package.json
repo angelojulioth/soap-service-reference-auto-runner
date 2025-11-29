@@ -2,7 +2,22 @@
   "name": "soap-service-reference-auto-runner",
   "displayName": "SOAP Service Reference Auto-Runner",
   "description": "Automatically runs dotnet-svcutil when dotnet-svcutil.params.json files change in ServiceReference folders",
-  "version": "0.0.1",
+  "version": "1.0.0",
+  "publisher": "avalderrama",
+  "author": {
+    "name": "Angelo Valderrama",
+    "email": "angelojulioth@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/angelojulioth/soap-service-reference-auto-runner.git"
+  },
+  "homepage": "https://github.com/angelojulioth/soap-service-reference-auto-runner#readme",
+  "bugs": {
+    "url": "https://github.com/angelojulioth/soap-service-reference-auto-runner/issues"
+  },
+  "license": "MIT",
+  "keywords": ["soap", "wsdl", "service-reference", "dotnet", "svcutil", "web-services"],
   "engines": {
     "vscode": "^1.106.1"
   },
@@ -28,6 +43,26 @@
       {
         "command": "soap-service-reference-auto-runner.setupWatchers",
         "title": "Setup File Watchers",
+        "category": "SOAP"
+      },
+      {
+        "command": "soap-service-reference-auto-runner.startWsdlMonitoring",
+        "title": "Start WSDL Monitoring",
+        "category": "SOAP"
+      },
+      {
+        "command": "soap-service-reference-auto-runner.stopWsdlMonitoring",
+        "title": "Stop WSDL Monitoring",
+        "category": "SOAP"
+      },
+      {
+        "command": "soap-service-reference-auto-runner.debugProject",
+        "title": "Debug C# Project",
+        "category": "SOAP"
+      },
+      {
+        "command": "soap-service-reference-auto-runner.runProject",
+        "title": "Run C# Project",
         "category": "SOAP"
       }
     ],
@@ -76,6 +111,28 @@
           "type": "boolean",
           "default": true,
           "description": "Show notifications when dotnet-svcutil runs"
+        },
+        "soapServiceReference.autoUpdateOnWsdlChange": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically update service references when WSDL changes are detected (without asking)"
+        },
+        "soapServiceReference.wsdlCheckInterval": {
+          "type": "number",
+          "default": 30,
+          "minimum": 5,
+          "maximum": 300,
+          "description": "Interval in seconds to check for WSDL changes (5-300 seconds)"
+        },
+        "soapServiceReference.showWsdlChangeDetails": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show detailed information about WSDL changes in notifications"
+        },
+        "soapServiceReference.enableWsdlMonitoringByDefault": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically start WSDL monitoring when opening service reference files"
         }
       }
     }

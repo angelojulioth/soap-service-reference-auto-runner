@@ -1,18 +1,20 @@
 # SOAP Service Reference Auto-Runner
 
-A VS Code extension that automatically runs `dotnet-svcutil` when `dotnet-svcutil.params.json` files change in ServiceReference folders. This streamlines SOAP service development by keeping your service references up to date automatically.
+A VS Code extension that monitors WSDL endpoints for changes and automatically updates your .NET service references. Perfect for SOAP service development with real-time WSDL change detection and integrated C# project management.
 
 ## Features
 
-- **Automatic File Watching**: Monitors all `dotnet-svcutil.params.json` files in `ServiceReference` folders across your workspace
-- **Auto-execution**: Runs `dotnet-svcutil` automatically when params files change or are created
+- **WSDL Change Detection**: Monitors actual WSDL endpoints (not just files) for content changes
+- **Smart Monitoring**: Polls WSDL URLs every 30 seconds and detects changes via content hashing
+- **Manual Service Updates**: On-demand service reference updates with a single click
+- **C# Project Integration**: 
+  - Debug C# projects directly from service reference files
+  - Run C# projects with integrated terminal support
+  - Automatic project discovery
 - **Generate Initial Config**: Create `dotnet-svcutil.params.json` files with guided setup
-- **Selective Watching**: Choose which project directories to monitor with file watchers
-- **Project Discovery**: Automatically finds .csproj files and suggests relevant directories
-- **Manual Trigger**: Right-click context menu option to manually run `dotnet-svcutil` on params files
-- **Progress Indication**: Shows progress notifications during service reference generation
-- **Output Channel**: Dedicated output channel for viewing `dotnet-svcutil` execution logs
-- **Configurable**: Settings to control auto-run behavior and notifications
+- **Smart CodeLens Buttons**: Context-aware inline buttons in service reference files
+- **Progress Indication**: Real-time feedback during service reference generation
+- **Output Channel**: Dedicated logging for all WSDL monitoring and service operations
 
 ## Requirements
 
@@ -25,19 +27,38 @@ This extension contributes the following settings:
 
 - `soapServiceReference.autoRun`: Enable/disable automatic running of dotnet-svcutil when params files change (default: `true`)
 - `soapServiceReference.showNotifications`: Show success/error notifications when dotnet-svcutil runs (default: `true`)
+- `soapServiceReference.autoUpdateOnWsdlChange`: Automatically update service references when WSDL changes are detected without asking (default: `false`)
+- `soapServiceReference.wsdlCheckInterval`: Interval in seconds to check for WSDL changes, range 5-300 seconds (default: `30`)
+- `soapServiceReference.showWsdlChangeDetails`: Show detailed information about WSDL changes in notifications (default: `true`)
+- `soapServiceReference.enableWsdlMonitoringByDefault`: Automatically start WSDL monitoring when opening service reference files (default: `false`)
 
 ## Usage
 
-### Automatic Mode (Default)
-1. Open a workspace containing SOAP projects with `ServiceReference/dotnet-svcutil.params.json` files
-2. The extension will automatically watch for changes to these files
-3. When a file changes, `dotnet-svcutil` will run automatically
-4. Check the "SOAP Service Reference Auto-Runner" output channel for execution details
-
-### Manual Mode
+### WSDL Monitoring Mode
 1. Open a `dotnet-svcutil.params.json` file in the editor
-2. Right-click and select "Run dotnet-svcutil" from the context menu
+2. Click `$(eye) Monitor WSDL Changes` to start monitoring the WSDL endpoints
+3. The extension will check every 30 seconds for changes to the actual WSDL content
+4. When changes are detected, you'll get a notification to update the service reference
+5. Click `$(eye-closed) Stop WSDL Monitoring` to stop monitoring
+
+### Manual Updates
+1. Open a `dotnet-svcutil.params.json` file in the editor
+2. Click `$(sync) Update Service Reference` to manually update from WSDL
 3. Or use the Command Palette: `Ctrl+Shift+P` → "SOAP: Run dotnet-svcutil"
+
+### C# Project Integration
+1. In any `dotnet-svcutil.params.json` file, use the inline buttons:
+   - `$(debug-start) Debug C# Project` - Start debugging the associated C# project
+   - `$(play) Run C# Project` - Run the C# project in terminal
+2. The extension automatically finds the `.csproj` file in the parent directory
+
+### CodeLens Buttons
+When viewing a `dotnet-svcutil.params.json` file, you'll see:
+- **`$(sync) Update Service Reference`** - Manual service reference update
+- **`$(eye) Monitor WSDL Changes`** / **`$(eye-closed) Stop WSDL Monitoring`** - Toggle WSDL monitoring
+- **`$(debug-start) Debug C# Project`** - Start debugging
+- **`$(play) Run C# Project`** - Run project
+- **`$(sync~spin) Running...`** - Shows when operation is in progress
 
 ### Creating New Service References
 1. Use Command Palette: `Ctrl+Shift+P` → "SOAP: Generate dotnet-svcutil.params.json"
@@ -63,9 +84,13 @@ YourProject/
 
 ## Commands
 
-- `SOAP: Run dotnet-svcutil` - Manually run dotnet-svcutil on the current params file
+- `SOAP: Run dotnet-svcutil` - Manually update service reference from WSDL
 - `SOAP: Generate dotnet-svcutil.params.json` - Create a new params file with guided setup
-- `SOAP: Setup File Watchers` - Select project directories to monitor for changes
+- `SOAP: Start WSDL Monitoring` - Begin monitoring WSDL endpoints for changes
+- `SOAP: Stop WSDL Monitoring` - Stop WSDL endpoint monitoring
+- `SOAP: Debug C# Project` - Start debugging the associated C# project
+- `SOAP: Run C# Project` - Run the C# project in terminal
+- `SOAP: Setup File Watchers` - Configure legacy file watching (deprecated)
 
 ## Known Issues
 
