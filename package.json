@@ -19,6 +19,16 @@
         "command": "soap-service-reference-auto-runner.runSvcUtil",
         "title": "Run dotnet-svcutil",
         "category": "SOAP"
+      },
+      {
+        "command": "soap-service-reference-auto-runner.generateSvcParams",
+        "title": "Generate dotnet-svcutil.params.json",
+        "category": "SOAP"
+      },
+      {
+        "command": "soap-service-reference-auto-runner.setupWatchers",
+        "title": "Setup File Watchers",
+        "category": "SOAP"
       }
     ],
     "menus": {
@@ -27,6 +37,11 @@
           "command": "soap-service-reference-auto-runner.runSvcUtil",
           "when": "resourceFilename == dotnet-svcutil.params.json",
           "group": "1_modification"
+        },
+        {
+          "command": "soap-service-reference-auto-runner.generateSvcParams",
+          "when": "explorerResourceIsFolder",
+          "group": "1_modification"
         }
       ],
       "editor/context": [
@@ -34,6 +49,18 @@
           "command": "soap-service-reference-auto-runner.runSvcUtil",
           "when": "resourceFilename == dotnet-svcutil.params.json",
           "group": "1_modification"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "soap-service-reference-auto-runner.generateSvcParams"
+        },
+        {
+          "command": "soap-service-reference-auto-runner.setupWatchers"
+        },
+        {
+          "command": "soap-service-reference-auto-runner.runSvcUtil",
+          "when": "resourceFilename == dotnet-svcutil.params.json"
         }
       ]
     },

@@ -28,10 +28,20 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
+	// Register command to generate initial svc params file
+	const generateSvcParamsCommand = vscode.commands.registerCommand('soap-service-reference-auto-runner.generateSvcParams', async () => {
+		await generateSvcParamsFile();
+	});
+
+	// Register command to setup file watchers with directory selection
+	const setupWatchersCommand = vscode.commands.registerCommand('soap-service-reference-auto-runner.setupWatchers', async () => {
+		await setupWatchersWithSelection(context);
+	});
+
 	// Setup file watchers for all workspace folders
 	setupFileWatchers(context);
 
-	context.subscriptions.push(runSvcUtilCommand, outputChannel);
+	context.subscriptions.push(runSvcUtilCommand, generateSvcParamsCommand, setupWatchersCommand, outputChannel);
 }
 
 function setupFileWatchers(context: vscode.ExtensionContext) {
@@ -187,6 +197,179 @@ async function runDotnetSvcUtil(paramFileUri: vscode.Uri): Promise<void> {
 			});
 		});
 	});
+}
+
+async function generateSvcParamsFile(): Promise<void> {
+	// Get WSDL URL from user
+	const wsdlUrl = await vscode.window.showInputBox({
+		prompt: 'Enter the WSDL URL',
+		placeHolder: 'http://localhost:5000/Service.asmx?wsdl',
+		validateInput: (value) => {
+			if (!value || !value.trim()) {
+				return 'WSDL URL is required';
+			}
+			try {
+				new URL(value);
+				return null;
+			} catch {
+				return 'Please enter a valid URL';
+			}
+		}
+	});
+
+	if (!wsdlUrl) {
+		return;
+	}
+
+	// Get namespace from user
+	const namespace = await vscode.window.showInputBox({
+		prompt: 'Enter the namespace for generated code',
+		placeHolder: 'ServiceReference',
+		value: 'ServiceReference'
+	});
+
+	if (!namespace) {
+		return;
+	}
+
+	// Select target directory
+	const targetDir = await selectTargetDirectory();
+	if (!targetDir) {
+		return;
+	}
+
+	// Create ServiceReference directory if it doesn't exist
+	const serviceRefDir = path.join(targetDir.fsPath, 'ServiceReference');
+	if (!fs.existsSync(serviceRefDir)) {
+		fs.mkdirSync(serviceRefDir, { recursive: true });
+	}
+
+	// Get target framework
+	const targetFramework = await vscode.window.showQuickPick([
+		'net9.0', 'net8.0', 'net7.0', 'net6.0', 'netstandard2.1', 'netstandard2.0'
+	], {
+		placeHolder: 'Select target framework',
+		canPickMany: false
+	});
+
+	if (!targetFramework) {
+		return;
+	}
+
+	// Create params file content
+	const paramsContent = {
+		"providerId": "Microsoft.Tools.ServiceModel.Svcutil",
+		"version": "8.0.0",
+		"options": {
+			"inputs": [wsdlUrl],
+			"namespaceMappings": [`*, ${namespace}`],
+			"outputFile": "Reference.cs",
+			"references": [
+				"Microsoft.Extensions.ObjectPool, {Microsoft.Extensions.ObjectPool, 8.0.10}",
+				"System.Security.Cryptography.Pkcs, {System.Security.Cryptography.Pkcs, 8.0.1}",
+				"System.Security.Cryptography.Xml, {System.Security.Cryptography.Xml, 8.0.2}"
+			],
+			"targetFramework": targetFramework,
+			"typeReuseMode": "All"
+		}
+	};
+
+	const paramsFilePath = path.join(serviceRefDir, 'dotnet-svcutil.params.json');
+	fs.writeFileSync(paramsFilePath, JSON.stringify(paramsContent, null, 2));
+
+	// Open the created file
+	const document = await vscode.workspace.openTextDocument(paramsFilePath);
+	await vscode.window.showTextDocument(document);
+
+	outputChannel.appendLine(`Created dotnet-svcutil.params.json at: ${paramsFilePath}`);
+	vscode.window.showInformationMessage('dotnet-svcutil.params.json file created successfully!');
+}
+
+async function selectTargetDirectory(): Promise<vscode.Uri | undefined> {
+	if (!vscode.workspace.workspaceFolders) {
+		vscode.window.showErrorMessage('No workspace folder is open');
+		return undefined;
+	}
+
+	if (vscode.workspace.workspaceFolders.length === 1) {
+		return vscode.workspace.workspaceFolders[0].uri;
+	}
+
+	// Multiple workspace folders - let user choose
+	const folderItems = vscode.workspace.workspaceFolders.map(folder => ({
+		label: folder.name,
+		description: folder.uri.fsPath,
+		folder: folder
+	}));
+
+	const selected = await vscode.window.showQuickPick(folderItems, {
+		placeHolder: 'Select target workspace folder for the ServiceReference'
+	});
+
+	return selected?.folder.uri;
+}
+
+async function setupWatchersWithSelection(context: vscode.ExtensionContext): Promise<void> {
+	if (!vscode.workspace.workspaceFolders) {
+		vscode.window.showErrorMessage('No workspace folders found');
+		return;
+	}
+
+	// Find all directories with .csproj files (potential project directories)
+	const projectDirs: { label: string; description: string; uri: vscode.Uri }[] = [];
+
+	for (const workspaceFolder of vscode.workspace.workspaceFolders) {
+		const csprojFiles = await vscode.workspace.findFiles(
+			new vscode.RelativePattern(workspaceFolder, '**/*.csproj'),
+			new vscode.RelativePattern(workspaceFolder, '**/node_modules/**')
+		);
+
+		for (const csprojFile of csprojFiles) {
+			const projectDir = path.dirname(csprojFile.fsPath);
+			const projectName = path.basename(projectDir);
+			projectDirs.push({
+				label: projectName,
+				description: projectDir,
+				uri: vscode.Uri.file(projectDir)
+			});
+		}
+	}
+
+	if (projectDirs.length === 0) {
+		vscode.window.showWarningMessage('No .csproj files found in workspace');
+		return;
+	}
+
+	// Let user select which project directories to watch
+	const selectedDirs = await vscode.window.showQuickPick(projectDirs, {
+		placeHolder: 'Select project directories to watch for ServiceReference changes',
+		canPickMany: true
+	});
+
+	if (!selectedDirs || selectedDirs.length === 0) {
+		return;
+	}
+
+	// Setup watchers for selected directories
+	selectedDirs.forEach(dirItem => {
+		const pattern = new vscode.RelativePattern(dirItem.uri, 'ServiceReference/dotnet-svcutil.params.json');
+		const watcher = vscode.workspace.createFileSystemWatcher(pattern);
+
+		watcher.onDidChange(uri => {
+			outputChannel.appendLine(`Detected change in: ${uri.fsPath}`);
+			runDotnetSvcUtil(uri);
+		});
+
+		watcher.onDidCreate(uri => {
+			outputChannel.appendLine(`Detected creation of: ${uri.fsPath}`);
+			runDotnetSvcUtil(uri);
+		});
+
+		context.subscriptions.push(watcher);
+		outputChannel.appendLine(`File watcher setup for project: ${dirItem.label} (${dirItem.description})`);
+	});
+
+	vscode.window.showInformationMessage(`File watchers setup for ${selectedDirs.length} project(s)`);
 }
 
 // This method is called when your extension is deactivated
