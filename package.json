@@ -3,7 +3,7 @@
   "displayName": "SOAP Service Reference Auto-Runner",
   "description": "Automatically runs dotnet-svcutil when dotnet-svcutil.params.json files change in ServiceReference folders",
   "version": "1.0.0",
-  "publisher": "avalderrama",
+  "publisher": "angelojulioth",
   "author": {
     "name": "Angelo Valderrama",
     "email": "angelojulioth@gmail.com"
